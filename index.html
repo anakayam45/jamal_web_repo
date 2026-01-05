@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimalist Counter</title>
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --primary: #2d3436;
+      --accent: #0984e3;
+      --danger: #d63031;
+    }
+
+    body, html { 
+      height: 100%; 
+      margin: 0; 
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #app {
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Angka Counter Besar */
+    #num { 
+      font-size: 8rem; 
+      font-weight: 800; 
+      margin: 0; 
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    /* Kontrol Tombol Bulat */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 40px 0;
+    }
+
+    .btn-circle {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: none;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s ease, opacity 0.2s;
+      color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .btn-circle:active { transform: scale(0.9); }
+    #btn-add { background-color: var(--accent); }
+    #btn-sub { background-color: var(--danger); }
+
+    /* Rekap Angka Kecil */
+    .recap-section {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .recap-num {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #b2bec3; /* Warna abu-abu agar tidak mendominasi */
+      background: #f1f2f6;
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app">
+    <p id="num">0</p>
+
+    <div class="controls">
+      <button id="btn-sub" class="btn-circle">−</button>
+      <button id="btn-add" class="btn-circle">+</button>
+    </div>
+
+    <div id="recap-container" class="recap-section"></div>
+  </div>
+
+  <script>
+    // Inisialisasi data dari LocalStorage
+    let historyData = JSON.parse(localStorage.getItem("counterHistory")) || [];
+
+    const numDisplay = document.getElementById("num");
+    const recapContainer = document.getElementById("recap-container");
+
+    function getTodayDate() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function updateUI() {
+      const today = getTodayDate();
+      const todayEntry = historyData.find(entry => entry[1] === today);
+      
+      // Update angka utama
+      numDisplay.innerText = todayEntry ? todayEntry[0] : 0;
+      
+      // Update list rekap (Hanya menampilkan angka/index 0 dari array 2D)
+      recapContainer.innerHTML = "";
+      historyData.slice().reverse().forEach((entry, index) => {
+        // Kita tidak menampilkan tanggal hari ini di list rekap bawah jika sedang aktif
+        // Namun jika ingin tetap muncul semua angka terdahulu:
+        const span = document.createElement("span");
+        span.className = "recap-num";
+        span.innerText = entry[0];
+        recapContainer.appendChild(span);
+      });
+    }
+
+    function changeCounter(amount) {
+      const today = getTodayDate();
+      const todayIndex = historyData.findIndex(entry => entry[1] === today);
+
+      if (todayIndex !== -1) {
+        historyData[todayIndex][0] += amount;
+        // Mencegah angka negatif jika diinginkan, jika tidak hapus baris di bawah
+        if (historyData[todayIndex][0] < 0) historyData[todayIndex][0] = 0;
+      } else {
+        // Jika hari baru, buat entri baru. Jangan biarkan mulai dari negatif.
+        const val = amount < 0 ? 0 : amount;
+        historyData.push([val, today]);
+      }
+
+      localStorage.setItem("counterHistory", JSON.stringify(historyData));
+      updateUI();
+    }
+
+    document.getElementById("btn-add").addEventListener("click", () => changeCounter(1));
+    document.getElementById("btn-sub").addEventListener("click", () => changeCounter(-1));
+
+    // Load tampilan awal
+    updateUI();
+  </script>
+</body>
+</html>
